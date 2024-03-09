@@ -1,0 +1,104 @@
+       // Your script logic here
+        var newData = {
+          date: "",
+          competitions: "all",
+          search: "",
+          status: "all",
+          limit: $(".total").text(),
+          type: $("#type").val(),
+          _token: $('meta[name="csrf-token"]').attr("content"),
+        };
+
+        var mappedMatches = [];
+
+        async function _getInfoLinkStreamOfMatch(
+          requestUrl,
+          method,
+          params,
+          hideDetail = true
+        ) {
+          try {
+            var res = await callAjax(requestUrl, method, params);
+            var statusCode = res.statusCode;
+
+            if (statusCode === 2) {
+              var streams = res.data;
+
+              if (streams.matches && streams.matches.length > 0) {
+                // Map the matches array to the global variable
+                mappedMatches = streams.matches.map((match) => ({
+                  matchId: match.match_id,
+                  homeTeam: match.home_name,
+                  awayTeam: match.away_name,
+                  status: match.status,
+                  competition: match.competition,
+                  startTime: match.start_time, // Keep the original start time
+                  // Add more properties as needed
+                }));
+
+                // Get the current time in the local time zone
+                var currentTime = moment.utc(); // Use UTC for the current time
+
+                // Iterate over mappedMatches and make Ajax calls for events less than 50 hours away
+                mappedMatches.forEach((match) => {
+                  // Convert start time to a moment object
+                  var startTime = moment.utc(match.startTime);
+
+                  // Calculate the time difference in hours
+                  var timeDifference = startTime.diff(currentTime, "hours");
+
+                  // Check if the event is less than 53 hours away
+                  if (timeDifference < 53) {
+                    var data = {
+                      _token: $('meta[name="csrf-token"]').attr("content"),
+                      match_id: match.matchId,
+                      channel_name: "CR7STREAMS SPORT STREAM LIVE HD",
+                      link: "https://url-shortener1364.blogspot.com/p/s.html?q=https://cr7str1364.blogspot.com/p/ch1.html",
+                      stream_type: "Web",
+                      quality: "HD",
+                      language: "English",
+                      ads: "1",
+                      bitrate: "4000",
+                      misr: "2MB",
+                      visible: true,
+                      mobile_compatible: true,
+                      nsfw: false,
+                      adblock: false,
+                      type: $("#type").val(),
+                    };
+
+
+                    MakeActualAjaxCall("/add/stream", "POST", data);
+                  }
+                });
+              }
+            } else {
+              console.error("Error:", res.message);
+            }
+
+            $("#loading").fadeOut(500);
+          } catch (error) {
+            console.error("Error:", error);
+            $("#loading").fadeOut(500);
+          }
+        }
+
+        // Correct function call
+         _getInfoLinkStreamOfMatch("/dashboard/", "POST", newData);
+
+        async function MakeActualAjaxCall(url, method, data) {
+          try {
+            await $.ajax({
+              url: url,
+              data: data,
+              type: method,
+              success: function(){toastr.success("Stream Added Successfully"); console.log("Posted Successfully");}
+            });
+
+            console.log("Posted Successfully");
+          } catch (err) {
+            console.error("Error:", err);
+          }
+        }
+
+
